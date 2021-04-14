@@ -1,7 +1,9 @@
 # robust_learning_for_data_poisoning_attack
 
 We use adversarial-robustness-toolbox in our code. 
+
 Please:  pip install adversarial-robustness-toolbox
+
 We run experiment on GPU.
 
 1. advgenmnist.py is trying to generate poisoned mnist data.  For regime A, we generate poisoned data with C=800, for regime B, we generate poisoned data with B = 3.
