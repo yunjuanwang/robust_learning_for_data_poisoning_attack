@@ -6,6 +6,8 @@ Please:  pip install adversarial-robustness-toolbox
 
 We run experiment on GPU.
 
+0. toy_gaussian_ntk.py: A toy example. FIrst generate 2-dimensional binary training data and test data using two Gaussian distribution with center located at (-5,0) and (5,0). Then normalize the data so that |x|=1. We use two-layer ReLU network with fixed top layer. To validate regime B, we add perturbation B = 0.975 to each of the samples, making the training data to move horizontally either left or right. To validate regime C, we random flip labels with probability beta = 0.4.
+
 1. advgenmnist.py is trying to generate poisoned mnist data.  For regime A, we generate poisoned data with C=800, for regime B, we generate poisoned data with B = 3.
 
 2. advgencifar.py is trying to generate poisoned CIFAR10 data. For regime A, we generate poisoned data with C=300, for regime B, we generate poisoned data with B = 3.
