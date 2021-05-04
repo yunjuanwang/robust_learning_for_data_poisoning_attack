@@ -113,6 +113,7 @@ eta_eps = args.eta_eps
 S1 = args.S1
 S2 = args.S2
 flag = args.flag
+lr = args.lr
 criterion = nn.CrossEntropyLoss()
 
 
@@ -157,7 +158,7 @@ if args.regime==3:
 
 print("regime:", args.regime)
 print("width:", width)
-print("learning rate:", args.lr)
+print("learning rate:", lr)
 print("batchsize:", bs)
 print("epoch T:", T)
 print("number of trials N:", N)
@@ -222,7 +223,9 @@ for n in range(N):
                 break
                 
             train_loss = criterion(torch.tensor(train_pred),torch.tensor(Y_train))
-            print("n:", n, "t:", t, "lr:", lr, "training loss:",train_loss.item(),"train_acc",train_acc, "valacc:", val_acc, "testacc", test_acc, "best_val_acc", bestacc)
+            val_loss = criterion(torch.tensor(val_pred),torch.tensor(Y_val))
+            test_loss = criterion(torch.tensor(test_pred),torch.tensor(Y_test))
+            print("n:", n, "t:", t, "lr:", lr, "train_loss:", train_loss.item(), "val_loss:", val_loss.item(), "test_loss:", test_loss.item(), "train_acc",train_acc, "valacc:", val_acc, "testacc", test_acc, "best_val_acc", bestacc)
             
         valacc.append(bestacc)
         model.load_state_dict(torch.load('checkpoint/'+str(date_time)+'.pth'))
