@@ -7,29 +7,22 @@ import numpy as np
 import scipy as sp
 from torch.autograd import Variable, Function
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from PIL import Image
-import math
-import torch.nn.init as init
 import torch.nn.functional as F
 from urllib import request
-import gzip
 import pickle
 import argparse
 import os
-import shutil
 import random
 import warnings
 import sys
 warnings.filterwarnings('ignore')
 
-from art.config import ART_DATA_PATH
 from art.utils import load_dataset, get_file,load_mnist,check_and_transform_label_format
 from art.classifiers import KerasClassifier
 from art.classifiers import PyTorchClassifier
 from sklearn.model_selection import StratifiedKFold, train_test_split, ShuffleSplit
 import datetime, time
 from poison_attack import adv_perturb, poison_attack
-from alexnet.py import AlexNet
 
 torch.backends.cudnn.benchmark=True
 

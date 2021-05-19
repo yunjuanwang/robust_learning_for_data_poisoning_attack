@@ -5,29 +5,18 @@ import torch.optim as optim
 import torch.nn as nn
 import numpy as np
 import scipy as sp
-from scipy.stats import wasserstein_distance
 from torch.autograd import Variable, Function
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from PIL import Image
-import math
-import torch.nn.init as init
-import torchvision.models as models
-from keras.models import Sequential
-from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D, Activation, Dropout
 import torch.nn.functional as F
 from urllib import request
-import gzip
 import pickle
 import argparse
 import os
-import shutil
 import random
 import warnings
 import sys
 warnings.filterwarnings('ignore')
-from keras.models import load_model
 
-from art.config import ART_DATA_PATH
 from art.utils import load_dataset, get_file,load_mnist,check_and_transform_label_format
 from art.classifiers import KerasClassifier
 from art.classifiers import PyTorchClassifier
