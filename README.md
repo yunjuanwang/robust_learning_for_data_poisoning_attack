@@ -18,4 +18,6 @@ cifarcorr/ contains the CIFAR10 poisoned data we use for our experiments.
 
 5. alexnet.py: AlexNet model. 
 
+6. resnet.py: resnet model.
+
 
