@@ -4,6 +4,8 @@ We use adversarial-robustness-toolbox in our code.  Please:  pip install adversa
 
 We run experiment on GPU.
 
+We put the poisoned data that we generate and use for test accuracy under different width in [here](https://drive.google.com/drive/folders/1_C5tg3QrmnlS2IIaD4rNSirm4wnf4kcH?usp=sharing).
+
 mnistcorr/ contains the MNIST poisoned data we use for our experiments.
 
 cifarcorr/ contains the CIFAR10 poisoned data we use for our experiments.
