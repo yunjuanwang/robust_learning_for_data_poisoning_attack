@@ -34,7 +34,7 @@ from alexnet.py import AlexNet
 torch.backends.cudnn.benchmark=True
 
 
-
+# model architecture
 class model_ntk(nn.Module):
     def __init__(self, width):
         super(model_ntk, self).__init__()
@@ -122,7 +122,7 @@ if args.regime==1:
         log_filename = 'log/cifar_alexnet_C'+str(args.C)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
         log = open(log_filename, 'w')
         sys.stdout = log
-        # generate poisoning attack
+        # generate poisoning attack based on AlexNet 
         advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=C, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=1)
     if flag==1:
         log_filename = 'log/cifar_alexnet_nonormalize_C'+str(args.C)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
@@ -150,9 +150,9 @@ if args.regime==2:
     print("B:", B)
 
 if args.regime==3:
-#    log_filename = 'log/cifar_beta'+str(beta)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
-#    log = open(log_filename, 'w')
-#    sys.stdout = log
+    log_filename = 'log/cifar_beta'+str(beta)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+    log = open(log_filename, 'w')
+    sys.stdout = log
     print("beta:", beta)
 
 
@@ -175,6 +175,7 @@ testacc = []
 for n in range(N):
     print('n:',n)
     
+    # regime C, generate label flip attack
     if args.regime==3:
         rvs = sp.stats.bernoulli.rvs(beta, size=50000)
         idxflip = np.where(rvs==1)[0]
@@ -183,6 +184,7 @@ for n in range(N):
         y[idxflip] = (y[idxflip]+1)%10
         advsave = x_train
     else:
+    # regime A or regime B
         y = y_train
         
     
@@ -214,9 +216,6 @@ for n in range(N):
                 count = 0
                 bestacc = max(bestacc, val_acc)
                 torch.save(model.state_dict(),'checkpoint/'+str(date_time)+'.pth')
-#            elif val = bestacc :
-#                count +=1
-#                torch.save(model.state_dict(),'checkpoint/'+str(date_time)+'.pth')
             else:
                 count += 1
             if count >= 100:

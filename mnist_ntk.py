@@ -38,7 +38,7 @@ from poison_attack import adv_perturb, poison_attack
 torch.backends.cudnn.benchmark=True
 
         
-        
+# model architecture
 class model_ntk(nn.Module):
     def __init__(self, width):
         super(model_ntk, self).__init__()
@@ -85,6 +85,7 @@ y_train_onehot = np.float32(y_train_onehot)
 y_test_onehot = np.float32(y_test_onehot)
 y_train = np.argmax(y_train_onehot, axis=1)
 y_test = np.argmax(y_test_onehot, axis=1)
+
 
 width = args.width
 bs = args.bs
@@ -170,6 +171,7 @@ testacc = []
 for n in range(N):
     print('n:',n)
     
+    # regime C, generate label flip attack
     if args.regime==3:
         rvs = sp.stats.bernoulli.rvs(beta, size=60000)
         idxflip = np.where(rvs==1)[0]
@@ -178,6 +180,7 @@ for n in range(N):
         y[idxflip] = (y[idxflip]+1)%10
         advsave = x_train
     else:
+    # regime A or regime B
         y = y_train
         
     
@@ -208,9 +211,6 @@ for n in range(N):
                 count = 0
                 bestacc = max(bestacc, val_acc)
                 torch.save(model.state_dict(),'checkpoint/'+str(date_time)+'.pth')
-#            elif val = bestacc :
-#                count +=1
-#                torch.save(model.state_dict(),'checkpoint/'+str(date_time)+'.pth')
             else:
                 count += 1
             if count >= 100:
