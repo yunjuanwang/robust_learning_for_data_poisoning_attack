@@ -37,6 +37,17 @@ def norms(Z):
 
 
 def adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion, regime=1):
+    """
+    X,y: training data.
+    n_label: the number of labels.
+    batchsize: batch size.
+    C: perturbed parameter, for regime A, the overall budget is C*sqrt{n}, for regime B, the per-sample budget is C.
+    S2: epoch for generating poisoned data.
+    eta_eps: learning rate for generating poisoned data.
+    model: model.
+    criterion: loss function.
+    regime: 1: regime A; 2: regime B.
+    """
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     X_orig = torch.from_numpy(X).float().to(device)
     X_tensor = X_orig
@@ -44,7 +55,7 @@ def adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion,
 
     eps_tensor = torch.from_numpy(eps).float().to(device)
     n, c, d, d = X.shape
-    B = np.sqrt(n) * C
+    B = np.sqrt(n) * C # L_21 norm of the perturbation budget
     print(B)
     
     for s in range(S2):
@@ -53,7 +64,7 @@ def adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion,
             epssample = Variable(eps_tensor[idx], requires_grad=True)
             
             pred = model.forward(X_tensor[idx] + epssample)
-            loss_eps = -criterion(-pred, y_tensor[idx])
+            loss_eps = -criterion(-pred, y_tensor[idx]) # use negated loss
             loss_eps.backward()
 
             with torch.no_grad():
@@ -101,7 +112,21 @@ def adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion,
 
     return eps_tensor.detach().cpu().numpy()
     
+    
 def poison_attack(X, y, n_label, batchsize, C, S1, S2, eta_w, eta_eps, net, regime=1):
+    """
+    X,y: training data.
+    n_label: the number of labels.
+    batchsize: batch size.
+    C: perturbed parameter, for regime A, the overall budget is C*sqrt{n}, for regime B, the per-sample budget is C.
+    S1: epoch for training classifier using clean data, to get the best model weight
+    eta_w: learning rate for training classifier using clean data
+    S2: epoch for generating poisoned data
+    eta_eps: learning rate for generating poisoned data
+    net: network
+    criterion: loss function
+    regime: 1: regime A; 2: regime B
+    """
     n, c, d, d = X.shape
 
     eps = np.float32(np.zeros(shape=(n,c,d,d)))
@@ -109,10 +134,21 @@ def poison_attack(X, y, n_label, batchsize, C, S1, S2, eta_w, eta_eps, net, regi
     
     model = net.to(device)
     criterion = nn.CrossEntropyLoss()
-    
     optimizer = optim.SGD(model.parameters(), lr = eta_w)
-    classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion,
-                              optimizer=optimizer, input_shape=(1,28,28), nb_classes=10,)
+    
+    # MNIST
+    classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion, optimizer=optimizer, input_shape=(1,28,28), nb_classes=10,)
+    #CIFAR
+    cifar_mu = np.ones((3, 32, 32))
+    cifar_mu[0, :, :] = 0.4914
+    cifar_mu[1, :, :] = 0.4822
+    cifar_mu[2, :, :] = 0.4465
+
+    cifar_std = np.ones((3, 32, 32))
+    cifar_std[0, :, :] = 0.2471
+    cifar_std[1, :, :] = 0.2435
+    cifar_std[2, :, :] = 0.2616
+    classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion, preprocessing=(cifar_mu, cifar_std), optimizer=optimizer, input_shape=(3,32,32), nb_classes=10)
 
     classifier.fit(X, y, batch_size=batchsize, nb_epochs=S1)
 
