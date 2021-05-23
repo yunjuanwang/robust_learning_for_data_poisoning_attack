@@ -151,7 +151,7 @@ print("number of trials N:", N)
 
 
 criterion = nn.CrossEntropyLoss()
-skf = StratifiedKFold(n_splits=5,random_state=40)
+skf = StratifiedKFold(n_splits=5,random_state=40,shuffle=True)
 
 X_test = x_test
 Y_test = y_test

@@ -158,7 +158,7 @@ print("number of trials N:", N)
 
 date_time = datetime.datetime.utcnow().isoformat().replace(":", "")
 
-skf = StratifiedKFold(n_splits=5,random_state=40)
+skf = StratifiedKFold(n_splits=5,random_state=40,shuffle=True)
 
 
 X_test = x_test
