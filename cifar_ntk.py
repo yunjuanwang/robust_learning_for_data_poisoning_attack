@@ -23,6 +23,7 @@ from art.classifiers import PyTorchClassifier
 from sklearn.model_selection import StratifiedKFold, train_test_split, ShuffleSplit
 import datetime, time
 from poison_attack import adv_perturb, poison_attack
+from alexnet import AlexNet
 
 torch.backends.cudnn.benchmark=True
 
@@ -61,7 +62,7 @@ parser.add_argument('--B', default=1, type=float, help='regime B')
 parser.add_argument('--beta', default=0.3, type=float, help='noise rate')
 parser.add_argument('--width', default=200, type=int, help='width of network')
 parser.add_argument('--regime', default=3, type=int, help='1/2/3')
-parser.add_argument('--flag', default=1, type=int, help='flag=1: load saved advsave, flag=0, generate poisoned training data')
+parser.add_argument('--flag', default=0, type=int, help='flag=1: load saved advsave, flag=0, generate poisoned training data')
 args = parser.parse_args()
 
 
@@ -108,15 +109,16 @@ S2 = args.S2
 flag = args.flag
 lr = args.lr
 criterion = nn.CrossEntropyLoss()
+regime = args.regime
 
 
 if args.regime==1:
-    if flag==0:
-        log_filename = 'log/cifar_alexnet_C'+str(args.C)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
-        log = open(log_filename, 'w')
-        sys.stdout = log
+#    if flag==0:
+#        log_filename = 'log/cifar_alexnet_C'+str(args.C)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+#        log = open(log_filename, 'w')
+#        sys.stdout = log
         # generate poisoning attack based on AlexNet 
-        advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=C, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=1)
+#        advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=C, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=1)
     if flag==1:
         log_filename = 'log/cifar_alexnet_nonormalize_C'+str(args.C)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
         log = open(log_filename, 'w')
@@ -127,12 +129,12 @@ if args.regime==1:
     print("C:", C)
 
 if args.regime==2:
-    if flag==0:
-        log_filename = 'log/cifar_alexnet_B'+str(args.B)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
-        log = open(log_filename, 'w')
-        sys.stdout = log
+#    if flag==0:
+#        log_filename = 'log/cifar_alexnet_B'+str(args.B)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+#        log = open(log_filename, 'w')
+#        sys.stdout = log
         # generate poisoning attack
-        advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=B, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=2)
+#        advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=B, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=2)
     if flag==1:
         log_filename = 'log/cifar_alexnet_nonormalize_B'+str(args.B)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
         log = open(log_filename, 'w')
@@ -143,9 +145,9 @@ if args.regime==2:
     print("B:", B)
 
 if args.regime==3:
-    log_filename = 'log/cifar_beta'+str(beta)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
-    log = open(log_filename, 'w')
-    sys.stdout = log
+#    log_filename = 'log/cifar_beta'+str(beta)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+#    log = open(log_filename, 'w')
+#    sys.stdout = log
     print("beta:", beta)
 
 
@@ -158,16 +160,14 @@ print("number of trials N:", N)
 
 date_time = datetime.datetime.utcnow().isoformat().replace(":", "")
 
-skf = StratifiedKFold(n_splits=5,random_state=40,shuffle=True)
-
-
 X_test = x_test
 Y_test = y_test
 valacc = []
 testacc = []
 for n in range(N):
     print('n:',n)
-    
+    np.random.seed(n)
+    skf = StratifiedKFold(n_splits=5,shuffle=True)
     # regime C, generate label flip attack
     if args.regime==3:
         rvs = sp.stats.bernoulli.rvs(beta, size=50000)
@@ -178,6 +178,10 @@ for n in range(N):
         advsave = x_train
     else:
     # regime A or regime B
+        if regime==1:
+            advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=C, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=1)
+        if regime==2:
+            advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=B, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=AlexNet(), regime=2)
         y = y_train
         
     
@@ -211,7 +215,7 @@ for n in range(N):
                 torch.save(model.state_dict(),'checkpoint/'+str(date_time)+'.pth')
             else:
                 count += 1
-            if count >= 100:
+            if count >= 30:
                 break
                 
             train_loss = criterion(torch.tensor(train_pred),torch.tensor(Y_train))
