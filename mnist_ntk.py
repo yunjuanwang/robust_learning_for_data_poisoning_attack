@@ -46,6 +46,7 @@ class model_ntk(nn.Module):
 date_time = datetime.datetime.utcnow().isoformat().replace(":", "")
     
 parser = argparse.ArgumentParser(description='NTK')
+parser.add_argument('--dataset', default="mnist", type=str, help='mnist / cifar')
 parser.add_argument('--eta_w', default=0.01, type=float, help='eta_w')
 parser.add_argument('--eta_eps', default=0.1, type=float, help='eta_eps')
 parser.add_argument('--S1', default=200, type=int, help='S1')
@@ -94,7 +95,8 @@ regime = args.regime
 
 if args.regime==1:
     if flag==0:
-        log_filename = 'log/mnist_C'+str(args.C)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+        #log_filename = 'log/mnist_C'+str(args.C)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+        log_filename = 'log/mnist_C'+str(args.C)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
         log = open(log_filename, 'w')
         sys.stdout = log
         
@@ -110,7 +112,8 @@ if args.regime==1:
     
 if args.regime==2:
     if flag==0:
-        log_filename = 'log/mnist_B'+str(args.B)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+#        log_filename = 'log/mnist_B'+str(args.B)+'_S1_'+str(S1)+'_etaw'+str(eta_w)+'_S2_'+str(S2)+'_etaeps_'+str(eta_eps)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
+        log_filename = 'log/mnist_B'+str(args.B)+'_N'+str(N)+'_T'+str(T)+'_bs'+str(bs)+'_lr'+str(args.lr)+'_width'+str(width)+'.txt'
         log = open(log_filename, 'w')
         sys.stdout = log
         
@@ -156,7 +159,17 @@ valacc = []
 testacc = []
 for n in range(N):
     print('n:',n)
+    
     np.random.seed(n)
+    random.seed(n)
+    np.random.RandomState(n)
+    torch.manual_seed(n)
+    torch.cuda.manual_seed(n)
+    torch.cuda.manual_seed_all(n)
+    torch.set_deterministic(True)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
     skf = StratifiedKFold(n_splits=5,shuffle=True)
     
     # regime C, generate label flip attack
@@ -170,9 +183,9 @@ for n in range(N):
     else:
     # regime A or regime B
         if regime==1:
-            advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=C, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=model_ntk(width=100), regime=1)
+            advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=C, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=model_ntk(width=100), regime=1, dataset = args.dataset)
         if regime==2:
-            advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=B, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=model_ntk(width=100), regime=2)
+            advsave = poison_attack(X=x_train, y=y_train, n_label=10, batchsize=bs, C=B, S1=S1, S2=S2, eta_w=eta_w, eta_eps=eta_eps, net=model_ntk(width=100), regime=2, dataset = args.dataset)
             
         y = y_train
         
@@ -206,7 +219,7 @@ for n in range(N):
                 torch.save(model.state_dict(),'checkpoint/'+str(date_time)+'.pth')
             else:
                 count += 1
-            if count >= 50:
+            if count >= 30:
                 break
                 
             train_loss = criterion(torch.tensor(train_pred),torch.tensor(Y_train))
