@@ -68,7 +68,10 @@ def adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion,
             loss_eps.backward()
 
             with torch.no_grad():
-                epssample += eta_eps * epssample.grad.detach() #/ norms(epssample.grad.detach())  # devide the gradient by its norm may help for the regime B (peturbation projected on the L2 ball)
+                if regime==1:
+                    epssample += eta_eps * epssample.grad.detach() 
+                if regime==2:
+                    epssample += eta_eps * epssample.grad.detach() / norms(epssample.grad.detach())  # devide the gradient by its norm may help for the regime B (peturbation projected on the L2 ball)
                 epssample.grad.zero_()
             eps_tensor[idx] = epssample.detach()
 
@@ -113,7 +116,7 @@ def adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion,
     return eps_tensor.detach().cpu().numpy()
     
     
-def poison_attack(X, y, n_label, batchsize, C, S1, S2, eta_w, eta_eps, net, regime=1):
+def poison_attack(X, y, n_label, batchsize, C, S1, S2, eta_w, eta_eps, net, regime=1, dataset="mnist"):
     """
     X,y: training data.
     n_label: the number of labels.
@@ -133,24 +136,29 @@ def poison_attack(X, y, n_label, batchsize, C, S1, S2, eta_w, eta_eps, net, regi
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     model = net.to(device)
+    if dataset == "mnist":
+        model.load_state_dict(torch.load('ntkconv100_baseline.pth'))
+    if dataset == "cifar":
+        model.load_state_dict(torch.load('alexnet_baseline.pth'))
+        
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr = eta_w)
     
     # MNIST
-    classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion, optimizer=optimizer, input_shape=(1,28,28), nb_classes=10,)
+    #classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion, optimizer=optimizer, input_shape=(1,28,28), nb_classes=10,)
     #CIFAR
-    cifar_mu = np.ones((3, 32, 32))
-    cifar_mu[0, :, :] = 0.4914
-    cifar_mu[1, :, :] = 0.4822
-    cifar_mu[2, :, :] = 0.4465
+#    cifar_mu = np.ones((3, 32, 32))
+#    cifar_mu[0, :, :] = 0.4914
+#    cifar_mu[1, :, :] = 0.4822
+#    cifar_mu[2, :, :] = 0.4465
+#
+#    cifar_std = np.ones((3, 32, 32))
+#    cifar_std[0, :, :] = 0.2471
+#    cifar_std[1, :, :] = 0.2435
+#    cifar_std[2, :, :] = 0.2616
+#    classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion, preprocessing=(cifar_mu, cifar_std), optimizer=optimizer, input_shape=(3,32,32), nb_classes=10)
 
-    cifar_std = np.ones((3, 32, 32))
-    cifar_std[0, :, :] = 0.2471
-    cifar_std[1, :, :] = 0.2435
-    cifar_std[2, :, :] = 0.2616
-    classifier = PyTorchClassifier(model=model, clip_values=(0, 1), loss=criterion, preprocessing=(cifar_mu, cifar_std), optimizer=optimizer, input_shape=(3,32,32), nb_classes=10)
-
-    classifier.fit(X, y, batch_size=batchsize, nb_epochs=S1)
+#    classifier.fit(X, y, batch_size=batchsize, nb_epochs=S1)
 
     eps = adv_perturb(X, y, eps, n_label, batchsize, C, S2, eta_eps, model, criterion, regime)
 
