@@ -18,8 +18,7 @@ import sys
 warnings.filterwarnings('ignore')
 
 from art.utils import load_dataset, get_file,load_mnist,check_and_transform_label_format
-from art.classifiers import KerasClassifier
-from art.classifiers import PyTorchClassifier
+from art.estimators.classification import KerasClassifier, PyTorchClassifier
 from sklearn.model_selection import StratifiedKFold, train_test_split, ShuffleSplit
 import datetime, time
 from poison_attack import adv_perturb, poison_attack
